@@ -1,0 +1,17 @@
+#!/bin/bash
+# Zram compression stats for Conky
+STATS=$(zramctl --raw --noheadings 2>/dev/null | head -1)
+if [ -z "$STATS" ]; then echo "N/A"; exit 0; fi
+SIZE=$(echo "$STATS" | awk '{print $3}')
+ALGO=$(echo "$STATS" | awk '{print $2}')
+DATA=$(echo "$STATS" | awk '{print $4}')
+COMP=$(echo "$STATS" | awk '{print $5}')
+# Convert to bytes for ratio calc
+data_bytes=$(numfmt --from=iec "$DATA" 2>/dev/null)
+comp_bytes=$(numfmt --from=iec "$COMP" 2>/dev/null)
+if [ "$data_bytes" -gt 0 ] 2>/dev/null && [ "$comp_bytes" -gt 0 ] 2>/dev/null; then
+    ratio=$(echo "scale=1; $data_bytes / $comp_bytes" | bc 2>/dev/null)
+    echo "$SIZE  ${ratio}:1"
+else
+    echo "$SIZE  idle"
+fi
